@@ -25,7 +25,10 @@ questions = [
 ]
 
 def get_gspread_client():
-    scope = ["https://www.googleapis.com/auth/spreadsheets"]
+    scope = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
     creds_path = "/etc/secrets/creds.json"
     creds_env = os.getenv("GOOGLE_CREDS_JSON")
 
