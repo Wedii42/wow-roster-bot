@@ -31,12 +31,13 @@ def get_gspread_client():
 
     try:
         if creds_env:
-            # Charger depuis variable d'environnement JSON
             creds_dict = json.loads(creds_env)
+            # Corrige les retours à la ligne dans la clé privée
+            if "private_key" in creds_dict:
+                creds_dict["private_key"] = creds_dict["private_key"].replace('\\n', '\n')
             creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
             logger.info("✅ Credentials chargés depuis variable d'environnement.")
         elif os.path.exists(creds_path):
-            # Charger depuis fichier secret Render
             creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
             logger.info(f"✅ Credentials chargés depuis {creds_path}.")
         else:
