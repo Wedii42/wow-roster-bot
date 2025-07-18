@@ -1,1 +1,1 @@
-worker: python creds_writer.py && python bot.py
+web: python creds-writer.py && python app.py

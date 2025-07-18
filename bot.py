@@ -6,24 +6,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
 
-from flask import Flask
-from threading import Thread
-
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot actif"
-
-def run():
-    app.run(host='0.0.0.0', port=8080)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
-keep_alive()
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -74,7 +56,10 @@ async def candidature(ctx):
         await ctx.send(f"{ctx.author.mention} une erreur est survenue. Contacte un officier.")
 
 
-# Remplace TON_TOKEN par le token copié plus tôt
-import os
-BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-
+# ✅ Fonction de lancement à appeler depuis app.py
+def run_bot():
+    BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+    if BOT_TOKEN:
+        bot.run(BOT_TOKEN)
+    else:
+        print("❌ Le token du bot Discord n'est pas défini dans les variables d'environnement.")
