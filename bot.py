@@ -5,6 +5,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
+import traceback
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -51,10 +52,10 @@ async def candidature(ctx):
 
         await ctx.author.send("✅ Merci ! Ta candidature a bien été envoyée.")
         await ctx.send(f"{ctx.author.mention} a soumis une candidature.")
-    except Exception as e:
-        print(f"❌ Erreur : {e}")
-        await ctx.send(f"{ctx.author.mention} une erreur est survenue. Contacte un officier.")
 
+    except Exception as e:
+        traceback.print_exc()
+        await ctx.send(f"{ctx.author.mention} une erreur est survenue. Contacte un officier.")
 
 # ✅ Fonction de lancement à appeler depuis app.py
 def run_bot():
