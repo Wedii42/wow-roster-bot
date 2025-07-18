@@ -3,6 +3,7 @@ from discord.ext import commands
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
+import json
 import logging
 
 # Setup logging
@@ -23,6 +24,31 @@ questions = [
     "Des précisions à transmettre aux officiers ?"
 ]
 
+def get_gspread_client():
+    scope = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds_path = "/etc/secrets/creds.json"
+    creds_env = os.getenv("GOOGLE_CREDS_JSON")
+
+    try:
+        if creds_env:
+            # On charge la clé depuis une variable d'environnement JSON (optionnel)
+            creds_dict = json.loads(creds_env)
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+            logger.info("✅ Credentials chargés depuis variable d'environnement.")
+        elif os.path.exists(creds_path):
+            # On charge la clé depuis le fichier secret Render
+            creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+            logger.info(f"✅ Credentials chargés depuis {creds_path}.")
+        else:
+            raise FileNotFoundError("Aucun fichier de credentials trouvé ni variable GOOGLE_CREDS_JSON définie.")
+
+        client = gspread.authorize(creds)
+        logger.info("✅ Client Google Sheets autorisé.")
+        return client
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'authentification Google Sheets : {e}", exc_info=True)
+        raise
+
 @bot.event
 async def on_ready():
     logger.info(f"✅ Connecté en tant que {bot.user}")
@@ -41,13 +67,13 @@ async def candidature(ctx):
             msg = await bot.wait_for("message", check=check, timeout=120)
             responses.append(msg.content)
 
-        # Connexion à Google Sheets
-        scope = ["https://www.googleapis.com/auth/spreadsheets"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-        client = gspread.authorize(creds)
+        client = get_gspread_client()
 
         sheet_name = os.getenv("SHEET_NAME")
         tab_name = os.getenv("TAB_NAME")
+
+        if not sheet_name or not tab_name:
+            raise ValueError("Les variables d'environnement SHEET_NAME ou TAB_NAME ne sont pas définies.")
 
         sheet = client.open(sheet_name).worksheet(tab_name)
         sheet.append_row([ctx.author.name] + responses)
@@ -66,3 +92,6 @@ def run_bot():
         bot.run(BOT_TOKEN)
     else:
         logger.error("❌ Le token du bot Discord n'est pas défini dans les variables d'environnement.")
+
+if __name__ == "__main__":
+    run_bot()
