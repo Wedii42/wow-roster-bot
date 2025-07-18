@@ -4,7 +4,6 @@ from discord.ext import commands
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
-import json
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -39,15 +38,16 @@ async def candidature(ctx):
             responses.append(msg.content)
 
         # Connexion à Google Sheets
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", SCOPES)
         client = gspread.authorize(creds)
 
         sheet_name = os.getenv("SHEET_NAME")
         tab_name = os.getenv("TAB_NAME")
 
         sheet = client.open(sheet_name).worksheet(tab_name)
-        sheet.append_row([ctx.author.name] + responses)
+        result = sheet.append_row([ctx.author.name] + responses)
+        print("✅ Ligne ajoutée dans la feuille:", result)
 
         await ctx.author.send("✅ Merci ! Ta candidature a bien été envoyée.")
         await ctx.send(f"{ctx.author.mention} a soumis une candidature.")
@@ -55,8 +55,6 @@ async def candidature(ctx):
         print(f"❌ Erreur : {e}")
         await ctx.send(f"{ctx.author.mention} une erreur est survenue. Contacte un officier.")
 
-
-# ✅ Fonction de lancement à appeler depuis app.py
 def run_bot():
     BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
     if BOT_TOKEN:
