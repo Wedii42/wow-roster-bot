@@ -5,7 +5,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
-import traceback
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -65,6 +64,3 @@ def run_bot():
     else:
         print("❌ Le token du bot Discord n'est pas défini dans les variables d'environnement.")
 
-    except Exception as e:
-        traceback.print_exc()  # Affiche le vrai détail de l'erreur dans Render
-        await ctx.send(f"{ctx.author.mention} une erreur est survenue. Contacte un officier.")
