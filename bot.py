@@ -1,9 +1,13 @@
-# bot.py
 import discord
 from discord.ext import commands
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -21,7 +25,7 @@ questions = [
 
 @bot.event
 async def on_ready():
-    print(f"✅ Connecté en tant que {bot.user}")
+    logger.info(f"✅ Connecté en tant que {bot.user}")
 
 @bot.command(name="candidature")
 async def candidature(ctx):
@@ -38,21 +42,22 @@ async def candidature(ctx):
             responses.append(msg.content)
 
         # Connexion à Google Sheets
-        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", SCOPES)
+        scope = ["https://www.googleapis.com/auth/spreadsheets"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
         client = gspread.authorize(creds)
 
         sheet_name = os.getenv("SHEET_NAME")
         tab_name = os.getenv("TAB_NAME")
 
         sheet = client.open(sheet_name).worksheet(tab_name)
-        result = sheet.append_row([ctx.author.name] + responses)
-        print("✅ Ligne ajoutée dans la feuille:", result)
+        sheet.append_row([ctx.author.name] + responses)
 
         await ctx.author.send("✅ Merci ! Ta candidature a bien été envoyée.")
         await ctx.send(f"{ctx.author.mention} a soumis une candidature.")
+        logger.info(f"Candidature reçue de {ctx.author.name}: {responses}")
+
     except Exception as e:
-        print(f"❌ Erreur : {e}")
+        logger.error(f"❌ Erreur : {e}", exc_info=True)
         await ctx.send(f"{ctx.author.mention} une erreur est survenue. Contacte un officier.")
 
 def run_bot():
@@ -60,5 +65,4 @@ def run_bot():
     if BOT_TOKEN:
         bot.run(BOT_TOKEN)
     else:
-        print("❌ Le token du bot Discord n'est pas défini dans les variables d'environnement.")
-
+        logger.error("❌ Le token du bot Discord n'est pas défini dans les variables d'environnement.")
